@@ -6,6 +6,7 @@ openpose_simg = "/home/axp798/axp798gallinahome/openpose_105.img"  # Path to ope
 store_path = "/home/axp798/axp798gallinahome/store/train/"         # Path to directory for storing rendered videos and json files from train videos
 
 train_dir = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train/"  # Path to list of directories containing training videos
+video_bind = ""
 path_bind = "/home/axp798/axp798gallinahome/,{}".format(video_bind)      # Path to directory to be accessible from within the singularity container
 
 
@@ -43,6 +44,20 @@ def main():
         print("{} directory started ".format(dir_name))
         video_dir = os.path.join(train_dir, dir_name)
         # video_dir = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train/001/"
+
+	if not os.path.exists(os.path.join(store_path, "frames/{}/".format(dir_name))):
+		os.mkdir(os.path.join(store_path, "frames/{}/".format(dir_name)))
+
+	videos_store = os.path.join(store_path, "videos/")  # directory to store rendered videos in the same format as train videos are stored
+        if not os.path.exists(os.path.join(videos_store, "{}/".format(dir_name))):
+                # creating the directory to store videos
+                # os.path.join(videos_store, "{}/".format(dir_name)) = "/home/axp798/axp798gallinahome/store/train/videos/001/"
+        	os.mkdir(os.path.join(videos_store, "{}/".format(dir_name)))
+
+	json_store = os.path.join(store_path, "json/")   # directory to store json files containing hand, face and body coordinates from the videos
+	if not os.path.exists(os.path.join(json_store, "{}/".format(dir_name))):
+		os.mkdir(os.path.join(json_store, "{}/".format(dir_name)))
+
         for video_name in os.listdir(video_dir):
 
             # video_name = 00001.K.avi, 00001.M.avi etc.
@@ -63,17 +78,11 @@ def main():
                 # video_path = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train/001/00001.M.avi"
                 print(video_path)
 
-                videos_store = os.path.join(store_path, "videos/")  # directory to store rendered videos in the same format as train videos are stored
-                if not os.path.exists(os.path.join(videos_store, "{}/".format(dir_name))):
-                    # creating the directory to store videos
-                    # os.path.join(videos_store, "{}/".format(dir_name)) = "/home/axp798/axp798gallinahome/store/train/videos/001/"
-                    os.mkdir(os.path.join(videos_store, "{}/".format(dir_name)))
 
                 # write_video_path = "/home/axp798/axp798gallinahome/store/train/videos/001/result_00001.avi"
                 write_video_path = os.path.join(videos_store, "{}/result_{}.avi".format(dir_name, parts[0]))
 
-                json_store = os.path.join(store_path, "json/")   # directory to store json files containing hand, face and body coordinates from the videos
-
+                
                 # write_json_path = "/home/axp798/axp798gallinahome/store/train/json/001/00001" 
                 write_json_path = os.path.join(json_store, "{}/{}/".format(dir_name, parts[0]))
 
