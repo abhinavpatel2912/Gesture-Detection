@@ -5,6 +5,9 @@ import cv2
 openpose_simg = "/home/axp798/axp798gallinahome/openpose_105.img"  # Path to openpose singularity image being used
 store_path = "/home/axp798/axp798gallinahome/store/train/"         # Path to directory for storing rendered videos and json files from train videos
 
+videos_store = os.path.join(store_path, "videos/")  # directory to store rendered videos in the same format as train videos are stored
+json_store = os.path.join(store_path, "json/")   # directory to store json files containing hand, face and body coordinates from the videos
+
 train_dir = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train/"  # Path to list of directories containing training videos
 video_bind = ""
 path_bind = "/home/axp798/axp798gallinahome/,{}".format(video_bind)      # Path to directory to be accessible from within the singularity container
@@ -42,21 +45,25 @@ def main():
 
         # dir_name = 001, 002, ..... , 027, 028, ..... , 128, 129, ....
         print("{} directory started ".format(dir_name))
+
         video_dir = os.path.join(train_dir, dir_name)
         # video_dir = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train/001/"
 
-	if not os.path.exists(os.path.join(store_path, "frames/{}/".format(dir_name))):
-		os.mkdir(os.path.join(store_path, "frames/{}/".format(dir_name)))
+        if not os.path.exists(os.path.join(store_path, "frames/{}/".format(dir_name))):
+            os.mkdir(os.path.join(store_path, "frames/{}/".format(dir_name)))
 
-	videos_store = os.path.join(store_path, "videos/")  # directory to store rendered videos in the same format as train videos are stored
+	    
+        print("hello")
+
         if not os.path.exists(os.path.join(videos_store, "{}/".format(dir_name))):
-                # creating the directory to store videos
-                # os.path.join(videos_store, "{}/".format(dir_name)) = "/home/axp798/axp798gallinahome/store/train/videos/001/"
+            # creating the directory to store videos
+            # os.path.join(videos_store, "{}/".format(dir_name)) = "/home/axp798/axp798gallinahome/store/train/videos/001/"
+
         	os.mkdir(os.path.join(videos_store, "{}/".format(dir_name)))
 
-	json_store = os.path.join(store_path, "json/")   # directory to store json files containing hand, face and body coordinates from the videos
-	if not os.path.exists(os.path.join(json_store, "{}/".format(dir_name))):
-		os.mkdir(os.path.join(json_store, "{}/".format(dir_name)))
+        
+        if not os.path.exists(os.path.join(json_store, "{}/".format(dir_name))):
+            os.mkdir(os.path.join(json_store, "{}/".format(dir_name)))
 
         for video_name in os.listdir(video_dir):
 
@@ -87,6 +94,13 @@ def main():
                 write_json_path = os.path.join(json_store, "{}/{}/".format(dir_name, parts[0]))
 
                 video_bind = video_path
+
+                print(path_bind)
+                print(openpose_simg)
+                print(video_path)
+                print(write_video_path)
+                print(write_json_path)
+
                 
                 command = "singularity run --bind " + path_bind + " " + openpose_simg + " --video " + video_path +  " --write_video " + write_video_path + " --write_json " + write_json_path + " --display 0 --face --hand"   # command to be executed on terminal
                 
