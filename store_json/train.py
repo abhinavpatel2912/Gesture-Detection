@@ -2,6 +2,8 @@
 import os
 import cv2
 
+
+
 openpose_simg = "/home/axp798/axp798gallinahome/openpose_105.img"  # Path to openpose singularity image being used
 store_path = "/home/axp798/axp798gallinahome/store/train/"         # Path to directory for storing rendered videos and json files from train videos
 
@@ -33,7 +35,7 @@ def create_frames(video_path, dir_name, video_name, parts):
     return
 
 def delete_video(write_video_path):
-    os.system("rm write_video_path")  # execute the delete video command
+    os.system("rm {}".format(write_video_path))  # execute the delete video command
     return
 
 def main():
@@ -53,8 +55,6 @@ def main():
             os.mkdir(os.path.join(store_path, "frames/{}/".format(dir_name)))
 
 	    
-        print("hello")
-
         if not os.path.exists(os.path.join(videos_store, "{}/".format(dir_name))):
             # creating the directory to store videos
             # os.path.join(videos_store, "{}/".format(dir_name)) = "/home/axp798/axp798gallinahome/store/train/videos/001/"
