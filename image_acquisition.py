@@ -3,13 +3,12 @@ import json
 import os
 import numpy as np
 
-json_path = "./json/"
 img_height = 240
 img_width = 320
 
 
-# min - margin_offset and max + margin_offset this is for x-coord
-# min - margin_offset for y-coord
+# min - margin_offset and max + margin_offset : for x-coord
+# min - margin_offset : for y-coord
 
 margin_offset = 25   # in pixels
 
