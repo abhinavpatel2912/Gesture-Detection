@@ -30,6 +30,7 @@ def create_frames(video_path, dir_name, video_name, parts):
         cv2.imwrite(frame_store, frame)     # save frame as JPEG file      
         done, frame = vidcap.read()
         print('Read a new frame: ', done)
+    
         num += 1
     
     return
