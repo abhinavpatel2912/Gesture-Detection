@@ -3,6 +3,7 @@ import json
 import os
 import numpy as np
 
+<<<<<<< HEAD
 global_min_x = 100000
 global_max_x = 0
 
@@ -14,6 +15,14 @@ img_width = 320
 
 # min - margin_offset and max + margin_offset this is for x-coord
 # min - margin_offset for y-coord
+=======
+img_height = 240
+img_width = 320
+
+
+# min - margin_offset and max + margin_offset : for x-coord
+# min - margin_offset : for y-coord
+>>>>>>> 6a4f24e92c3d0b893a413dcfce745119c7e6ae28
 
 margin_offset = 25  # in pixels
 
