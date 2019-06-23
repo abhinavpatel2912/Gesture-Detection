@@ -12,3 +12,11 @@ The aim of this project is to develop an automated system for hand gesture detec
 - Tensorflow
 - Keras
 - Singularity Container
+
+### Project Update
+
+The progress made in the project is updated in the blog posts. The blog posts with the updates on the work done till now are:
+
+- [Setting up OpenPose in CWRU HPC](https://medium.com/@abhinavpatel2912/setting-up-openpose-in-cwru-hpc-8955f510f6ac)
+- [Week 1 & Week 2 (GSoC 2019)]()
+- [Week 3 & Week 4 (GSoC 2019)](https://medium.com/@abhinavpatel2912/week-3-week-4-gsoc-2019-12d572b2cd5c)
