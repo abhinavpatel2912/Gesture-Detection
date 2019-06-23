@@ -49,7 +49,7 @@ def main():
 
     dir_ptr = 46
 
-    for dir_name in os.listdir(valid_dir)[45: 100]:
+    for dir_name in os.listdir(valid_dir):
 
         print("Directory {} started!".format(dir_ptr))
         # dir_name = 001, 002, ..... , 027, 028, ..... , 128, 129, ....
