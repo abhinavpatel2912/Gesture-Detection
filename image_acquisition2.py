@@ -12,8 +12,8 @@ img_width = 320
 
 offset = 25  # amount of shift in extreme points (in pixels)
 
-def getExtrmCoords(points_list):
 
+def getExtrmCoords(points_list):
     '''
 
     :param points_list: list of x and y coordinates of joints along with their confidence scores
@@ -29,7 +29,7 @@ def getExtrmCoords(points_list):
         # print("ptr is {} and len(points_list) is {}".format(ptr, len(points_list)))
         curr_x = points_list[ptr]
         curr_y = points_list[ptr + 1]
-        
+
         if curr_x >= 0 and curr_x <= img_width:
             x_coord.append(curr_x)
         if curr_y >= 0 and curr_y <= img_height:
@@ -47,9 +47,7 @@ def getExtrmCoords(points_list):
         return points_min_x, points_max_x, points_min_y
 
 
-
-def getBoundingBox(json_path, global_val):
-
+def getBoundingBox(json_path, global_val, start_frame, end_frame):
     '''
 
     :param json_path: path of directory containing all the json files of the respective video
@@ -61,7 +59,7 @@ def getBoundingBox(json_path, global_val):
 
     file_list = os.listdir(json_path)
 
-    for json_file in file_list:
+    for json_file in file_list[start_frame - 1 : end_frame]:
 
         arr = json_file.split('.')
         if arr[-1] != "json":
@@ -78,7 +76,6 @@ def getBoundingBox(json_path, global_val):
 
         main_dict = obj['people'][0]
 
-
         print("main_dict.keys() is {}".format(main_dict.keys()))
         pose = main_dict['pose_keypoints']
         hand_left = main_dict['hand_left_keypoints']
@@ -90,7 +87,6 @@ def getBoundingBox(json_path, global_val):
         hand_left_min_x, hand_left_max_x, hand_left_min_y = getExtrmCoords(hand_left)
         hand_right_min_x, hand_right_max_x, hand_right_min_y = getExtrmCoords(hand_right)
         # face_min_x, face_max_x, face_min_y = getExtrmCoords(face)
-
 
         global_min_x = min(global_min_x, pose_min_x, hand_left_min_x, hand_right_min_x)
         global_max_x = max(global_max_x, pose_max_x, hand_left_max_x, hand_right_max_x)
@@ -113,7 +109,6 @@ def getBoundingBox(json_path, global_val):
     #     global_min_y = 0
     # else:
     #     global_min_y -= offset
-
 
     bounding_box = [
         (global_min_x, global_min_y),
@@ -150,8 +145,8 @@ def main(global_val):
     #
     # print(bounding_box)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     global_min_x = 100000
     global_max_x = 0
 
