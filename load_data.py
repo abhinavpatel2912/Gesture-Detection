@@ -7,6 +7,7 @@ import cv2
 # curr_dict.update({"label": label})
 # curr_dict.update({"bounding_box": bounding_box})
 
+
 with open('bounding_box_train.pkl', 'rb') as f:
     data = pickle.load(f)
 

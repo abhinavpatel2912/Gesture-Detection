@@ -13,6 +13,7 @@ img_width = 320
 offset = 25  # amount of shift in extreme points (in pixels)
 
 
+
 def getExtrmCoords(points_list):
     '''
 

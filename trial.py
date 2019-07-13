@@ -14,6 +14,7 @@ global_max_y = 240
 
 global_val = [global_min_x, global_max_x, global_min_y, global_max_y]
 
+
 data = []
 
 with open(labels_path, 'r') as f:

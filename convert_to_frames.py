@@ -1,6 +1,7 @@
 import os
 import cv2
 
+
 videos_path = "/home/axp798/axp798gallinahome/ConGD/ConGD_phase_1/train"
 store_frames = "/home/axp798/axp798gallinahome/store/train/frames"
 
