@@ -11,11 +11,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "2"
 
-mean = 0.0
-variance = 0.0
-offset = 0.0
-scale = None
-variance_epsilon = 0.0
 
 DTYPE = tf.float32
 batch_size = 8
@@ -55,6 +50,7 @@ def conv3DBlock(prev_layer, layer_name, in_filters, out_filters):
 def input_block(input, input_filter_shape, input_stride):
 
     with tf.variable_scope("input_layer"):
+        out_filters = 16
         kernel = getKernel(kernel_name, input_filter_shape)
         curr_layer = tf.nn.conv3d(input, kernel, strides=input_stride, padding="VALID")
         print("input_layer", curr_layer.get_shape())
@@ -63,9 +59,10 @@ def input_block(input, input_filter_shape, input_stride):
                                                 offset,
                                                 scale,
                                                 variance_epsilon,
-                                                name=None
-                                            )
-        biases = _bias_variable('biases', [num_channels])
+                                                name=None)
+
+        biases = _bias_variable('biases', [out_filters])
+        print(biases.get_shape())
         curr_layer = tf.nn.bias_add(curr_layer, biases)
         curr_layer = tf.nn.relu(curr_layer)
 
@@ -95,7 +92,7 @@ def basic_block(input, in_filters, out_filters, layer_num):
 def inference(input):
 
     prev_layer = input_block(input, input_filter_shape, input_stride)
-    in_filters = 3
+    in_filters = 16
 
     for index, out_filters in enumerate(num_filters_list):
         prev_layer = basic_block(prev_layer, in_filters, out_filters, index + 2)
@@ -144,7 +141,7 @@ def train_neural_network(x_input, y_input, learning_rate=0.05, keep_rate=0.7, ep
 
         epoch_loss = 0
         print("session starts!")
-        mini_batch_x = np.ones((batch_size, 16, 16, 16, 3))  # testing
+        mini_batch_x = np.ones((batch_size, 16, 256, 256, 3))  # testing
         mini_batch_y = np.ones((batch_size, num_classes))  # testing
 
         _optimizer, _cost = sess.run([optimizer, cost],
