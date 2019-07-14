@@ -5,12 +5,14 @@ import os
 
 print(device_lib.list_local_devices())
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "2"
 
 FC_SIZE = 2048
 DTYPE = tf.float32
 num_classes = 249
-batch_size = 32
+batch_size = 8
 
 stride = 1
 pool_stride = [1, 1, 1, 1, 1]
@@ -46,7 +48,7 @@ def maxPool3DBlock(prev_layer, ksize):
     return prev_layer
 
 
-with tf.name_scope('inputs'):
+with tf.device('/device:GPU:0'):
     x_input = tf.placeholder(tf.float32, shape=[None, 16, 16, 16, 3])
     y_input = tf.placeholder(tf.float32, shape=[None, num_classes])
 
@@ -164,7 +166,7 @@ def train_neural_network(x_input, y_input, learning_rate=0.05, keep_rate=0.7,
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y_input))
 
     with tf.name_scope("training"):
-        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
 
     correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_input, 1))
     accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
