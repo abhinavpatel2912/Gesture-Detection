@@ -20,5 +20,5 @@ The progress made in the project is updated in the blog posts. The blog posts wi
 - [Setting up OpenPose in CWRU HPC](https://medium.com/@abhinavpatel2912/setting-up-openpose-in-cwru-hpc-8955f510f6ac)
 - [Week 1 & Week 2 (GSoC 2019)](https://medium.com/@abhinavpatel2912/week-1-week-2-gsoc-2019-85448409dd0f)
 - [Week 3 & Week 4 (GSoC 2019)](https://medium.com/@abhinavpatel2912/week-3-week-4-gsoc-2019-12d572b2cd5c)
-- [Week 5 & Week 6 (GSoC 2019)]()
-- [Week 7 & Week 8 (GSoC 2019)]()
+- [Week 5 (GSoC 2019)](https://medium.com/@abhinavpatel2912/week-5-gsoc-2019-6b07acc91eb6)
+- [Weeks 6-7 (GSoC 2019)](https://medium.com/@abhinavpatel2912/weeks-6-8-gsoc-2019-1b3d7df33e0c)
