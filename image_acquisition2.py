@@ -24,7 +24,12 @@ def getExtrmCoords(points_list):
 
     x_coord = []
     y_coord = []
-    print(points_list)
+
+    points_max_x = 0
+    points_min_x = 1000
+    points_min_y = 1000
+
+    # print("points_list: {}".format(points_list))
     for ptr in range(0, len(points_list), 3):
 
         # print("ptr is {} and len(points_list) is {}".format(ptr, len(points_list)))
@@ -33,19 +38,28 @@ def getExtrmCoords(points_list):
 
         if curr_x >= 0 and curr_x <= img_width:
             x_coord.append(curr_x)
+            points_min_x = min(curr_x, points_min_x)
+            points_max_x = max(curr_x, points_max_x)
+
         if curr_y >= 0 and curr_y <= img_height:
             y_coord.append(curr_y)
+            points_min_y = min(curr_y, points_min_y)
 
-    print(x_coord)
-    print(y_coord)
+    # print("x_coord: {}".format(x_coord))
+    # print("y_coord: {}".format(y_coord))
 
-    if len(x_coord) > 0 and len(y_coord) > 0:
-        points_min_x = min(i for i in x_coord if i > 0)
-        points_max_x = max(i for i in x_coord if i > 0)
+    return 0 if points_min_x == 1000 else points_min_x, 0 if points_max_x == 0 else points_max_x, 0 if points_min_y == 1000 else points_min_y
 
-        points_min_y = min(i for i in y_coord if i > 0)
 
-        return points_min_x, points_max_x, points_min_y
+    # if len(x_coord) > 0 and len(y_coord) > 0:
+    #
+    #
+    #     points_min_x = min(i for i in x_coord if i >= 0)
+    #     points_max_x = max(i for i in x_coord if i >= 0)
+    #
+    #     points_min_y = min(i for i in y_coord if i >= 0)
+
+
 
 
 def getBoundingBox(json_path, global_val, start_frame, end_frame):
@@ -56,69 +70,92 @@ def getBoundingBox(json_path, global_val, start_frame, end_frame):
     :return: bounding box around the person in the given video
     '''
 
-    global_min_x, global_max_x, global_min_y, global_max_y = global_val
+    try:
+        global_min_x, global_max_x, global_min_y, global_max_y = global_val
 
-    file_list = os.listdir(json_path)
+        file_list = os.listdir(json_path)
 
-    for json_file in file_list[start_frame - 1 : end_frame]:
+        for json_file in file_list[start_frame - 1: end_frame]:
 
-        arr = json_file.split('.')
-        if arr[-1] != "json":
-            continue
+            arr = json_file.split('.')
+            if arr[-1] != "json":
+                continue
 
-        print("{} json started!".format(json_file))
+            # print("{} json started!".format(json_file))
 
-        json_file_path = os.path.join(json_path, json_file)
+            json_file_path = os.path.join(json_path, json_file)
 
-        with open(json_file_path, 'r') as myfile:
-            data = myfile.read()
+            try:
+                with open(json_file_path, 'r') as myfile:
+                    data = myfile.read()
+            except Exception as e:
+                print("type error: {}".format(str(e)))
+                continue
 
-        obj = json.loads(data)
+            # text = open(json_file_path, 'r')
+            # data = text.read()
+            try:
+                obj = json.loads(data)
+            except Exception as e:
+                print("type error: {}".format(str(e)))
+                continue
 
-        main_dict = obj['people'][0]
+            if len(obj['people']) == 0:
+                continue
 
-        print("main_dict.keys() is {}".format(main_dict.keys()))
-        pose = main_dict['pose_keypoints']
-        hand_left = main_dict['hand_left_keypoints']
-        hand_right = main_dict['hand_right_keypoints']
+            main_dict = obj['people'][0]
 
-        # face = main_dict['face_keypoints']
+            # print("main_dict.keys() is {}".format(main_dict.keys()))
+            pose = main_dict['pose_keypoints']
+            hand_left = main_dict['hand_left_keypoints']
+            hand_right = main_dict['hand_right_keypoints']
 
-        pose_min_x, pose_max_x, pose_min_y = getExtrmCoords(pose)
-        hand_left_min_x, hand_left_max_x, hand_left_min_y = getExtrmCoords(hand_left)
-        hand_right_min_x, hand_right_max_x, hand_right_min_y = getExtrmCoords(hand_right)
-        # face_min_x, face_max_x, face_min_y = getExtrmCoords(face)
+            # face = main_dict['face_keypoints']
 
-        global_min_x = min(global_min_x, pose_min_x, hand_left_min_x, hand_right_min_x)
-        global_max_x = max(global_max_x, pose_max_x, hand_left_max_x, hand_right_max_x)
+            pose_min_x, pose_max_x, pose_min_y = getExtrmCoords(pose)
+            hand_left_min_x, hand_left_max_x, hand_left_min_y = getExtrmCoords(hand_left)
+            hand_right_min_x, hand_right_max_x, hand_right_min_y = getExtrmCoords(hand_right)
+            # face_min_x, face_max_x, face_min_y = getExtrmCoords(face)
 
-        # global_min_y = min(global_min_y, pose_min_y, hand_left_min_y, hand_right_min_y, face_min_y)
+            global_min_x = min(global_min_x, pose_min_x, hand_left_min_x, hand_right_min_x)
+            global_max_x = max(global_max_x, pose_max_x, hand_left_max_x, hand_right_max_x)
 
-    print("global_min_x is {} and global_max_x is {}".format(global_min_x, global_max_x))
+            global_min_y = min(global_min_y, pose_min_y, hand_left_min_y, hand_right_min_y)
 
-    if global_min_x - offset <= 0:
-        global_min_x = 0
-    else:
-        global_min_x -= offset
+        print("global_min_x is {} and global_max_x is {}".format(global_min_x, global_max_x))
 
-    if global_max_x + offset > img_width:
-        global_max_x = img_width
-    else:
-        global_max_x += offset
+        global_max_x = img_width if 0 else global_max_x
+        global_min_x = 0 if 100000 else global_min_x
+        global_min_y = 0 if 100000 else global_min_y
 
-    # if global_min_y - offset <= 0:
-    #     global_min_y = 0
-    # else:
-    #     global_min_y -= offset
+        if global_min_x - offset <= 0:
+            global_min_x = 0
+        else:
+            global_min_x -= offset
 
-    bounding_box = [
-        (global_min_x, global_min_y),
-        (global_max_x, global_min_y),
-        (global_min_x, global_max_y),
-        (global_max_x, global_max_y)
-    ]
+        if global_max_x + offset > img_width:
+            global_max_x = img_width
+        else:
+            global_max_x += offset
 
-    return bounding_box
+        if global_min_y - offset <= 0:
+            global_min_y = 0
+        else:
+            global_min_y -= offset
+
+        bounding_box = [
+            global_min_x,  # top_left
+            global_max_x,  # top_right
+            global_min_y,  # bottom_left
+            global_max_y  # bottom_right
+        ]
+
+        return bounding_box
+    except Exception as e:
+        print("json_path {}".format(json_path))
+        print("type error: {}".format(str(e)))
+
+
 
 
 def main(global_val):

@@ -2,6 +2,11 @@ import os
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.client import device_lib
+import time
+import scipy.misc as smisc
+import pickle
+import random
+# import skimage
 
 # input_video = [batch_size, depth, height, width, num_channels]
 
@@ -17,14 +22,15 @@ offset = 0.0
 scale = None
 variance_epsilon = 0.0
 
-height = 112
-width = 112
-depth = 24
-
+height = 96
+width = 96
+depth = 16
 
 DTYPE = tf.float32
-batch_size = 32
+batch_size = 48
 kernel_shape = 3
+
+total_num_video = 15000
 
 num_classes = 249
 num_channels = 3
@@ -64,12 +70,12 @@ def input_block(input, input_filter_shape, input_stride):
         kernel = getKernel(kernel_name, input_filter_shape)
         curr_layer = tf.nn.conv3d(input, kernel, strides=input_stride, padding="VALID")
         print("input_layer", curr_layer.get_shape())
-        curr_layer = tf.nn.batch_normalization(curr_layer, mean,
-                                                variance,
-                                                offset,
-                                                scale,
-                                                variance_epsilon,
-                                                name=None)
+        # curr_layer = tf.nn.batch_normalization(curr_layer, mean,
+        #                                         variance,
+        #                                         offset,
+        #                                         scale,
+        #                                         variance_epsilon,
+        #                                         name=None)
 
         biases = _bias_variable('biases', [out_filters])
         print(biases.get_shape())
@@ -83,7 +89,7 @@ def basic_block(input, in_filters, out_filters, layer_num, add_kernel_name):
 
     layer_name = "conv{}a".format(layer_num)
     prev_layer = conv3DBlock(input, layer_name, in_filters, out_filters)
-    prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
+    # prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
     prev_layer = tf.nn.relu(prev_layer)
     print(layer_name, prev_layer.get_shape())
 
@@ -91,7 +97,7 @@ def basic_block(input, in_filters, out_filters, layer_num, add_kernel_name):
 
     layer_name = "conv{}b".format(layer_num)
     prev_layer = conv3DBlock(prev_layer, layer_name, in_filters, out_filters)
-    prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
+    # prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
 
     residual = prev_layer
 
@@ -115,28 +121,6 @@ def _shortcut3d(input, residual, add_kernel_name):
     if not equal_channels:
         kernel = getKernel(add_kernel_name, [1, 1, 1, input_shape[-1], residual_shape[-1]])
         shortcut = tf.nn.conv3d(shortcut, kernel, strides=conv_stride, padding="SAME")
-
-
-    #
-    # stride_dim1 = input._keras_shape[DIM1_AXIS] // residual._keras_shape[DIM1_AXIS]
-    #
-    # stride_dim2 = input._keras_shape[DIM2_AXIS] \
-    #     // residual._keras_shape[DIM2_AXIS]
-    # stride_dim3 = input._keras_shape[DIM3_AXIS] \
-    #     // residual._keras_shape[DIM3_AXIS]
-    # equal_channels = residual._keras_shape[CHANNEL_AXIS] \
-    #     == input._keras_shape[CHANNEL_AXIS]
-    #
-    # shortcut = input
-    # if stride_dim1 > 1 or stride_dim2 > 1 or stride_dim3 > 1 \
-    #         or not equal_channels:
-    #     shortcut = Conv3D(
-    #         filters=residual._keras_shape[CHANNEL_AXIS],
-    #         kernel_size=(1, 1, 1),
-    #         strides=(stride_dim1, stride_dim2, stride_dim3),
-    #         kernel_initializer="he_normal", padding="valid",
-    #         kernel_regularizer=l2(1e-4)
-    #         )(input)
 
     return (shortcut + residual)
 
@@ -173,7 +157,33 @@ def inference(input):
     return softmax_linear
 
 
-def train_neural_network(x_input, y_input, learning_rate=0.05, keep_rate=0.7, epochs=10):
+random_clips = 12
+win_size = 16
+
+with open('./../bounding_box_train.pkl', 'rb') as f:
+    data = pickle.load(f)
+
+
+def getFrameCut(frame, bounding_box):
+    ext_left = np.ceil(bounding_box[0])
+    ext_right = np.ceil(bounding_box[1])
+    top = np.ceil(bounding_box[2])
+    bottom = np.ceil(bounding_box[3])
+
+    frame_cut = frame[top: bottom, ext_left: ext_right]
+
+    return frame_cut
+
+import scipy
+
+with open('/home/axp798/axp798gallinahome/store/train/pickled_files_list.pkl', 'rb') as f:
+    pickled_files_list = pickle.load(f)
+
+file1 = open("epoch_loss.txt", "w")
+file1.write("Losses: \n")
+file1.close()
+
+def train_neural_network(x_input, y_input, learning_rate=0.001, keep_rate=0.7, epochs=10):
 
     with tf.name_scope("cross_entropy"):
 
@@ -181,12 +191,11 @@ def train_neural_network(x_input, y_input, learning_rate=0.05, keep_rate=0.7, ep
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y_input))
 
     with tf.name_scope("training"):
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
     correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_input, 1))
     accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
 
-    # iterations = int(len(x_train_data) / batch_size) + 1
 
     gpu_options = tf.GPUOptions(allow_growth=True)
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
@@ -194,49 +203,105 @@ def train_neural_network(x_input, y_input, learning_rate=0.05, keep_rate=0.7, ep
         sess.run(tf.global_variables_initializer())
         import datetime
 
-        start_time = datetime.datetime.now()
-
-        # iterations = int(len(x_train_data) / batch_size) + 1
-        # run epochs
+        start_time = time.time()
 
         epoch_loss = 0
         print("session starts!")
-        mini_batch_x = np.ones((batch_size, depth, height, width, 3))  # testing
-        mini_batch_y = np.ones((batch_size, num_classes))  # testing
 
-        _optimizer, _cost = sess.run([optimizer, cost],
-                                     feed_dict={x_input: mini_batch_x, y_input: mini_batch_y})
-        epoch_loss += _cost
+        num_batch_completed = 0
+        for epoch in range(epochs):
 
-        print("Done!")
+            start_time_epoch = time.time()
+            batch_start_time = time.time()
+            print("Epoch {} started!".format(epoch + 1))
+            epoch_loss = 0
+            # mini batch
 
-        # for epoch in range(epochs):
-        #
-        #     start_time_epoch = datetime.datetime.now()
-        #     print("Epoch {} started!".format(epoch))
-        #     epoch_loss = 0
-        #     # mini batch
-        #     for itr in range(iterations):
-        #
-        #         mini_batch_x = x_train_data[itr * batch_size: (itr + 1) * batch_size]
-        #         mini_batch_y = y_train_data[itr * batch_size: (itr + 1) * batch_size]
-        #         _optimizer, _cost = sess.run([optimizer, cost],
-        #                                      feed_dict={x_input: mini_batch_x, y_input: mini_batch_y})
-        #         epoch_loss += _cost
-        #
-        #     #  using mini batch in case not enough memory
-        #     acc = 0
-        #     itrs = int(len(x_test_data) / batch_size) + 1
-        #     for itr in range(itrs):
-        #         mini_batch_x_test = x_test_data[itr * batch_size: (itr + 1) * batch_size]
-        #         mini_batch_y_test = y_test_data[itr * batch_size: (itr + 1) * batch_size]
-        #         acc += sess.run(accuracy, feed_dict={x_input: mini_batch_x_test, y_input: mini_batch_y_test})
-        #
-        #     end_time_epoch = datetime.datetime.now()
-        #     print(' Testing Set Accuracy:', acc / itrs, ' Time elapse: ', str(end_time_epoch - start_time_epoch))
-        #
-        # end_time = datetime.datetime.now()
-        # print('Time elapse: ', str(end_time - start_time))
+            mini_batch_x = []
+            mini_batch_y = []
+            batch_filled = 0
+
+            pickle_files_index = 0
+            for dict in data:
+
+                video_frames_dir = dict['video_dir']
+                bounding_box = dict['bounding_box']
+                print(bounding_box)
+                range_of_frames = dict['range_of_frames']
+                label = dict['label']
+
+                with open(pickled_files_list[pickle_files_index], 'rb') as f:
+                    curr_video = pickle.load(f)
+
+                cut_frames_list = curr_video
+
+                num_frames = len(cut_frames_list)
+                num_clips_per_video = random_clips
+                window_size = win_size
+
+                num_clip_index = 0
+
+                while num_clip_index < num_clips_per_video:
+                    start_frame = random.randint(0, num_frames - window_size)
+                    end_frame = start_frame + window_size
+
+                    if batch_filled == batch_size:
+                        num_batch_completed += 1
+                        mini_batch_x = np.array(mini_batch_x)
+                        mini_batch_x = mini_batch_x / 255.0
+                        mini_batch_y = np.array(mini_batch_y)
+
+                        perm = np.random.permutation(batch_size)
+
+                        mini_batch_x = mini_batch_x[perm]
+                        mini_batch_y = mini_batch_y[perm]
+
+                        _optimizer, _cost = sess.run([optimizer, cost], feed_dict={x_input: mini_batch_x, y_input: mini_batch_y})
+                        epoch_loss += _cost
+                        batch_end_time = time.time()
+
+                        file1 = open("epoch_loss.txt", "a")
+                        file1.write("batches completed: {}, time taken: {}, loss: {} \n".format(num_batch_completed, batch_end_time - batch_start_time, epoch_loss))
+                        file1.close()
+                        print("time taken: {}, epoch loss: {}".format(batch_end_time - batch_start_time, epoch_loss))
+                        batch_start_time = time.time()
+
+                        mini_batch_x = []
+                        mini_batch_y = []
+                        batch_filled = 0
+
+                    mini_batch_x.append(cut_frames_list[start_frame: end_frame])
+                    basic_line = [0] * num_classes
+                    basic_line[int(label) - 1] = 1
+                    basic_label = basic_line
+                    # print("basic_label: {}".format(basic_label))
+
+                    mini_batch_y.append(basic_label)
+                    batch_filled += 1
+
+                    num_clip_index += 1
+
+            # for itr in range(iterations):
+            #
+            #     mini_batch_x = x_train_data[itr * batch_size: (itr + 1) * batch_size]
+            #     mini_batch_y = y_train_data[itr * batch_size: (itr + 1) * batch_size]
+            #     _optimizer, _cost = sess.run([optimizer, cost],
+            #                                  feed_dict={x_input: mini_batch_x, y_input: mini_batch_y})
+            #     epoch_loss += _cost
+            #
+            # #  using mini batch in case not enough memory
+            # acc = 0
+            # itrs = int(len(x_test_data) / batch_size) + 1
+            # for itr in range(itrs):
+            #     mini_batch_x_test = x_test_data[itr * batch_size: (itr + 1) * batch_size]
+            #     mini_batch_y_test = y_test_data[itr * batch_size: (itr + 1) * batch_size]
+            #     acc += sess.run(accuracy, feed_dict={x_input: mini_batch_x_test, y_input: mini_batch_y_test})
+            #
+            # end_time_epoch = datetime.datetime.now()
+            # print(' Testing Set Accuracy:', acc / itrs, ' Time elapse: ', str(end_time_epoch - start_time_epoch))
+
+        end_time = time.time()
+        print('Time elapse: ', str(end_time - start_time))
 
 
 
