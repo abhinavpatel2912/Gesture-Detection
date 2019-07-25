@@ -16,21 +16,13 @@ os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "2"
 
-mean = 0.0
-variance = 0.0
-offset = 0.0
-scale = None
-variance_epsilon = 0.0
-
 height = 96
 width = 96
 depth = 16
 
 DTYPE = tf.float32
-batch_size = 48
+batch_size = 24
 kernel_shape = 3
-
-total_num_video = 15000
 
 num_classes = 249
 num_channels = 3
@@ -38,14 +30,14 @@ input_filter_shape = [3, 7, 7, num_channels, num_channels]
 input_stride = [1, 1, 2, 2, 1]
 conv_stride = [1, 1, 1, 1, 1]
 kernel_name = "weights"
-num_filters_list = [16, 32, 64, 128] # as per the paper
+num_filters_list = [16, 32, 64, 128]  # as per the paper
 
 with tf.device('/device:GPU:0'):
     x_input = tf.placeholder(tf.float32, shape=[None, depth, height, width, 3])
     y_input = tf.placeholder(tf.float32, shape=[None, num_classes])
 
 def getKernel(name, shape):
-    kernel = tf.get_variable(name, shape, DTYPE, tf.truncated_normal_initializer(stddev=0.1))
+    kernel = tf.get_variable(name, shape, DTYPE, tf.contrib.layers.xavier_initializer(uniform=True))
     return kernel
 
 def _bias_variable(name, shape):
@@ -70,12 +62,15 @@ def input_block(input, input_filter_shape, input_stride):
         kernel = getKernel(kernel_name, input_filter_shape)
         curr_layer = tf.nn.conv3d(input, kernel, strides=input_stride, padding="VALID")
         print("input_layer", curr_layer.get_shape())
+
         # curr_layer = tf.nn.batch_normalization(curr_layer, mean,
         #                                         variance,
         #                                         offset,
         #                                         scale,
         #                                         variance_epsilon,
         #                                         name=None)
+
+        curr_layer = tf.layers.batch_normalization(curr_layer, training=True)
 
         biases = _bias_variable('biases', [out_filters])
         print(biases.get_shape())
@@ -89,7 +84,7 @@ def basic_block(input, in_filters, out_filters, layer_num, add_kernel_name):
 
     layer_name = "conv{}a".format(layer_num)
     prev_layer = conv3DBlock(input, layer_name, in_filters, out_filters)
-    # prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
+    prev_layer = tf.layers.batch_normalization(prev_layer, training=True)
     prev_layer = tf.nn.relu(prev_layer)
     print(layer_name, prev_layer.get_shape())
 
@@ -97,7 +92,7 @@ def basic_block(input, in_filters, out_filters, layer_num, add_kernel_name):
 
     layer_name = "conv{}b".format(layer_num)
     prev_layer = conv3DBlock(prev_layer, layer_name, in_filters, out_filters)
-    # prev_layer = tf.nn.batch_normalization(prev_layer, mean, variance, offset, scale, variance_epsilon, name=None)
+    prev_layer = tf.layers.batch_normalization(prev_layer, training=True)
 
     residual = prev_layer
 
@@ -143,6 +138,18 @@ def inference(input):
     prev_layer = tf.nn.avg_pool3d(prev_layer, [1, num_frames, height, width, 1], [1, 1, 1, 1, 1], padding="VALID")
     print(prev_layer.get_shape())
 
+    with tf.variable_scope('fc1') as scope:
+
+        dim = np.prod(prev_layer.get_shape().as_list()[1:])
+        prev_layer_flat = tf.reshape(prev_layer, [-1, dim])
+        weights = getKernel('weights', [dim, FC_SIZE])
+        biases = _bias_variable('biases', [FC_SIZE])
+
+        fc1 = tf.nn.relu(tf.matmul(prev_layer_flat, weights) + biases, name=scope.name)
+
+
+    prev_layer = fc1
+
     with tf.variable_scope('softmax_linear') as scope:
 
         dim = np.prod(prev_layer.get_shape().as_list()[1:])
@@ -152,7 +159,7 @@ def inference(input):
         biases = _bias_variable('biases', [num_classes])
 
         softmax_linear = tf.add(tf.matmul(prev_layer_flat, weights), biases, name=scope.name)
-        print(prev_layer.get_shape())
+        print(softmax_linear.get_shape())
 
     return softmax_linear
 
@@ -190,7 +197,8 @@ def train_neural_network(x_input, y_input, learning_rate=0.001, keep_rate=0.7, e
         prediction = inference(x_input)
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y_input))
 
-    with tf.name_scope("training"):
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
     correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y_input, 1))
