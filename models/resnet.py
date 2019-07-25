@@ -127,18 +127,6 @@ def inference(input):
     prev_layer = tf.nn.avg_pool3d(prev_layer, [1, num_frames, height, width, 1], [1, 1, 1, 1, 1], padding="VALID")
     print(prev_layer.get_shape())
 
-    with tf.variable_scope('fc1') as scope:
-
-        dim = np.prod(prev_layer.get_shape().as_list()[1:])
-        prev_layer_flat = tf.reshape(prev_layer, [-1, dim])
-        weights = getKernel('weights', [dim, FC_SIZE])
-        biases = _bias_variable('biases', [FC_SIZE])
-
-        fc1 = tf.nn.relu(tf.matmul(prev_layer_flat, weights) + biases, name=scope.name)
-
-
-    prev_layer = fc1
-
     with tf.variable_scope('softmax_linear') as scope:
 
         dim = np.prod(prev_layer.get_shape().as_list()[1:])
