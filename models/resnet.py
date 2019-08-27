@@ -53,22 +53,11 @@ def conv3DBlock(prev_layer, layer_name, in_filters, out_filters):
 
 def input_block(input, input_filter_shape, input_stride):
 
-    with tf.variable_scope("input_layer"):
+    with tf.variable_scope("inpuT_layer"):
         out_filters = 3
-        kernel = getKernel(kernel_name, input_filter_shape)
-        curr_layer = tf.nn.conv3d(input, kernel, strides=input_stride, padding="VALID")
-        print("input_layer", curr_layer.get_shape())
-
-<<<<<<< HEAD
-        # curr_layer = tf.nn.batch_normalization(curr_layer, mean,
-        #                                         variance,
-        #                                         offset,
-        #                                         scale,
-        #                                         variance_epsilon,
-        #                                         name=None)
-=======
-        curr_layer = tf.layers.batch_normalization(curr_layer, training=True)
->>>>>>> 5c8e993ecd15fe0092f4b5f45cc00cab0d743318
+        kernel = getKernel(kernel_name, inpuT_filter_shape)
+        curr_layer = tf.nn.conv3d(inpuT, kernel, strides=inpuT_stride, padding="VALID")
+        print("inpuT_layer", curr_layer.get_shape())
 
         curr_layer = tf.layers.batch_normalization(curr_layer, training=True)
 
@@ -76,7 +65,6 @@ def input_block(input, input_filter_shape, input_stride):
         print(biases.get_shape())
         curr_layer = tf.nn.bias_add(curr_layer, biases)
         curr_layer = tf.nn.relu(curr_layer)
-
 
     return curr_layer
 
