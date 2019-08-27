@@ -6,7 +6,6 @@ import time
 import scipy.misc as smisc
 import pickle
 import random
-# import skimage
 
 # input_video = [batch_size, depth, height, width, num_channels]
 
@@ -49,9 +48,6 @@ def conv3DBlock(prev_layer, layer_name, in_filters, out_filters):
         kernel = getKernel(kernel_name, [kernel_shape, kernel_shape, kernel_shape, in_filters, out_filters])
         prev_layer = tf.nn.conv3d(prev_layer, kernel, strides=conv_stride, padding="SAME")
         print(layer_name, prev_layer.get_shape())
-        # biases = _bias_variable('biases', [out_filters])
-        # prev_layer = tf.nn.bias_add(prev_layer, biases)
-        # prev_layer = tf.nn.relu(prev_layer)
 
     return prev_layer
 
@@ -63,12 +59,16 @@ def input_block(input, input_filter_shape, input_stride):
         curr_layer = tf.nn.conv3d(input, kernel, strides=input_stride, padding="VALID")
         print("input_layer", curr_layer.get_shape())
 
+<<<<<<< HEAD
         # curr_layer = tf.nn.batch_normalization(curr_layer, mean,
         #                                         variance,
         #                                         offset,
         #                                         scale,
         #                                         variance_epsilon,
         #                                         name=None)
+=======
+        curr_layer = tf.layers.batch_normalization(curr_layer, training=True)
+>>>>>>> 5c8e993ecd15fe0092f4b5f45cc00cab0d743318
 
         curr_layer = tf.layers.batch_normalization(curr_layer, training=True)
 
@@ -288,25 +288,6 @@ def train_neural_network(x_input, y_input, learning_rate=0.001, keep_rate=0.7, e
                     batch_filled += 1
 
                     num_clip_index += 1
-
-            # for itr in range(iterations):
-            #
-            #     mini_batch_x = x_train_data[itr * batch_size: (itr + 1) * batch_size]
-            #     mini_batch_y = y_train_data[itr * batch_size: (itr + 1) * batch_size]
-            #     _optimizer, _cost = sess.run([optimizer, cost],
-            #                                  feed_dict={x_input: mini_batch_x, y_input: mini_batch_y})
-            #     epoch_loss += _cost
-            #
-            # #  using mini batch in case not enough memory
-            # acc = 0
-            # itrs = int(len(x_test_data) / batch_size) + 1
-            # for itr in range(itrs):
-            #     mini_batch_x_test = x_test_data[itr * batch_size: (itr + 1) * batch_size]
-            #     mini_batch_y_test = y_test_data[itr * batch_size: (itr + 1) * batch_size]
-            #     acc += sess.run(accuracy, feed_dict={x_input: mini_batch_x_test, y_input: mini_batch_y_test})
-            #
-            # end_time_epoch = datetime.datetime.now()
-            # print(' Testing Set Accuracy:', acc / itrs, ' Time elapse: ', str(end_time_epoch - start_time_epoch))
 
         end_time = time.time()
         print('Time elapse: ', str(end_time - start_time))
