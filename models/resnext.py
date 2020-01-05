@@ -25,15 +25,8 @@ depth = 64  # out channel
 
 image_size = 112
 image_depth = 16
-batch_size = 1
 num_channels = 3
 num_classes = 249
-iteration = 391
-# 128 * 391 ~ 50,000
-
-test_iteration = 10
-
-total_epochs = 1
 
 
 def conv_layer(input, filter, kernel, stride, padding='SAME', layer_name="conv"):
