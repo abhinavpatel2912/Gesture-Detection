@@ -101,15 +101,8 @@ def main():
                 write_json_path = os.path.join(json_store, "{}/{}/".format(dir_name, parts[0]))
 
                 video_bind = video_path
-
-                # print(path_bind)
-                print(openpose_simg)
-                print(video_path)
-                print(write_video_path)
-                print(write_json_path)
-
+                
                 print("command started!")
-
 				command = "singularity run --nv --bind {},{} {} --video {} --write_keypoint_json {} --no_display " \
 						  "--render_pose 0 " \
 						  "--hand"\
