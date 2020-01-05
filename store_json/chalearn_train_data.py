@@ -1,9 +1,6 @@
 # Importing Libraries
-
 import os
-
-# import cv2
-
+import cv2
 
 # Path to openpose singularity image being used
 openpose_simg = "/home/axp798/axp798gallinahome/openpose_1_0_5.simg"  
