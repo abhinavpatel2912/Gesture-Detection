@@ -113,14 +113,15 @@ def main():
 
                 print("command started!")
 
-				command = "singularity run --nv --bind {},{} {} --video {} --write_keypoint_json {} --no_display --render_pose 0 " \
+				command = "singularity run --nv --bind {},{} {} --video {} --write_keypoint_json {} --no_display " \
+						  "--render_pose 0 " \
 						  "--hand"\
 					.format(
 					video_path,
 					lib_dir,
 					openpose_simg,
 					video_path,
-					write_json_path
+					write_json_path)
 
                 os.system(command)  # run the command on terminal
 				
