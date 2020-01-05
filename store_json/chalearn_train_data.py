@@ -103,22 +103,22 @@ def main():
                 video_bind = video_path
                 
                 print("command started!")
-				command = "singularity run --nv --bind {},{} {} --video {} --write_keypoint_json {} --no_display " \
-						  "--render_pose 0 " \
-						  "--hand"\
-					.format(
-					video_path,
-					lib_dir,
-					openpose_simg,
-					video_path,
-					write_json_path)
+                command = "singularity run --nv --bind {},{} {} --video {} --write_keypoint_json {} --no_display " \
+                          "--render_pose 0 " \
+                          "--hand"\
+                    .format(
+                    video_path,
+                    lib_dir,
+                    openpose_simg,
+                    video_path,
+                    write_json_path)
 
                 os.system(command)  # run the command on terminal
 				
-				# convert the rendered videos with openpose coordinates to frames
+                # convert the rendered videos with openpose coordinates to frames
                 create_frames(write_video_path, dir_name, video_name, parts)   
 
-				# delete the rendered videos to save disk space
+                # delete the rendered videos to save disk space
 				delete_video(write_video_path)  
 					
                 video_ptr += 1
